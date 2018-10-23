@@ -8,6 +8,7 @@ import time
 import dlib
 import cv2
 import datetime
+from Evento import Evento
 
 class visualRecognition(threading.Thread):
     # aca va todo el codigo de visual recognition
@@ -117,7 +118,7 @@ class visualRecognition(threading.Thread):
 						print("Blinks: ", self.TOTAL)
 
 					if self.COUNTER >= self.EYE_AR_CONSEC_FRAMES_SLEEP:
-						self.events.put("DORMIDO")
+						self.events.put(Evento("ALERT", "Dormido", "Conductor"))
 						if not self.ALARM_ON:
 							self.ALARM_ON = True
 
