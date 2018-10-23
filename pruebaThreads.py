@@ -29,7 +29,7 @@ if __name__ == "__main__":
     serialThread = threading.Thread(target=serialConnection)
     serialThread.daemon = True
     serialThread.start()
-    serialThread.join()
+#    serialThread.join()
     
     sleep(10)
 
