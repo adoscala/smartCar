@@ -2,6 +2,7 @@ import threading
 from random import random
 import obd
 from time import sleep
+from Evento import Evento
 
 class obdIIDriver(threading.Thread):
     # aca va todo lo relacionado a obdII
@@ -16,5 +17,5 @@ class obdIIDriver(threading.Thread):
         print self.connection.is_connected()
         while True:
             response = self.connection.query(obd.commands.SPEED)
-            self.events.put(response.value)
+            self.events.put(Evento("INFO", response.value, "Conductor")
             sleep(1)

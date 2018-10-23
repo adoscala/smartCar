@@ -12,6 +12,7 @@ import time
 import dlib
 import cv2
 import datetime
+from Evento import Evento
 
 def euclidean_dist(ptA, ptB):
         # compute and return the euclidean distance between the two
