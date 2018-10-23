@@ -92,8 +92,8 @@ class visualRecognition(threading.Thread):
 				# visualize each of the eyes
 				leftEyeHull = cv2.convexHull(leftEye)
 				rightEyeHull = cv2.convexHull(rightEye)
-				cv2.drawContours(frame, [leftEyeHull], -1, (0, 255, 0), 1)
-				cv2.drawContours(frame, [rightEyeHull], -1, (0, 255, 0), 1)
+				#cv2.drawContours(frame, [leftEyeHull], -1, (0, 255, 0), 1)
+				#cv2.drawContours(frame, [rightEyeHull], -1, (0, 255, 0), 1)
 
 				# check to see if the eye aspect ratio is below the blink
 				# threshold, and if so, increment the blink frame counter
@@ -127,7 +127,7 @@ class visualRecognition(threading.Thread):
 								th.buzzer.blink(0.1, 0.1, 10, background=True)
 
 							# draw an alarm on the frame
-							cv2.putText(frame, "DROWSINESS ALERT!", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+							#cv2.putText(frame, "DROWSINESS ALERT!", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
 				# reset the eye frame counter
 				# otherwise, the eye aspect ratio is not below the blink
 				# threshold, so reset the counter and alarm
@@ -138,10 +138,10 @@ class visualRecognition(threading.Thread):
 				# draw the computed eye aspect ratio on the frame to help
 				# with debugging and setting the correct eye aspect ratio
 				# thresholds and frame counters
-				cv2.putText(frame, "EAR: {:.3f}".format(ear), (300, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+				#cv2.putText(frame, "EAR: {:.3f}".format(ear), (300, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
 
 			# show the frame
-			cv2.imshow("Frame", frame)
+			#cv2.imshow("Frame", frame)
 			key = cv2.waitKey(1) & 0xFF
 
 			# if the `q` key was pressed, break from the loop
