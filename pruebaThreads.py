@@ -6,6 +6,7 @@ from random import random
 import argparse
 import os
 from time import sleep
+from collections import deque
 
 def serialConnection():
     os.system("sudo rfcomm connect hci0 00:1D:A5:68:98:8B")
@@ -23,6 +24,7 @@ if __name__ == "__main__":
 
     events = Queue() #Cola de eventos
     events_lock = threading.Lock()
+
     vR = visualRecognition(events, events_lock, args)
     vR.daemon = True #Para que termine cuando se cierre el main
     
@@ -38,10 +40,32 @@ if __name__ == "__main__":
     obdII = obdIIDriver(events, events_lock)
     obdII.daemon = True
     obdII.start()
-    
+
+    info_queue = deque([], maxlen = 10)
+    #freq_queue = deque([], maxlen = 10)
+    #alert_queue = deque([], maxlen)
+
     while True: # Loop principal del programa
         if not events.empty():
             event = events.get()
             print(event)
             # Hacer lo que haya que hacer con el evento
+            if event.tipo == "INFO":
+                    info_queue.append(event)
+            elif event.tipo == "BLINK FREQUENCY":
+                    if event.descripcion > 0.5:
+                            #Hay que ver los cambios en la velocidad  
+            elif event.tipo == "ALERT":
+                    #Hay que enviar el evento al servidor
+
+
+
+
+
+                
+
+
+
+
+        
 
