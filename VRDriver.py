@@ -52,6 +52,8 @@ class visualRecognition(threading.Thread):
 		self.vs = VideoStream(usePiCamera=True).start()
 		time.sleep(1.0)
 
+		self.blinkFrequency = 0
+
 	def run(self):
 		time = datetime.datetime.now()
 		while True:
@@ -107,15 +109,20 @@ class visualRecognition(threading.Thread):
 						self.TOTAL += 1
 						now = datetime.datetime.now()
 						if now.minute == time.minute:
-							if (now.second - time.second) > 10:
+							dif = now.second - time.second
+							if dif > 10:
+								self.blinkFrequency = self.TOTAL / dif
+								self.events.put(Evento("BLINK FREQUENCY", self.blinkFrequency, "Conductor"))
 								self.TOTAL = 0
 								time = now
 						else: 
 							dif = 60 + (now.second - time.second)
 							if dif > 10:
+								self.blinkFrequency = self.TOTAL / dif
 								self.TOTAL = 0 
 								time = now
 						print("Blinks: ", self.TOTAL)
+						print("Blink Frequency: ", self.blinkFrequency)
 
 					if self.COUNTER >= self.EYE_AR_CONSEC_FRAMES_SLEEP:
 						self.events.put(Evento("ALERT", "Dormido", "Conductor"))
