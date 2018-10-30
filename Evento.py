@@ -8,3 +8,5 @@ class Evento:
         self.descripcion = descripcion
         self.hora = datetime.datetime.now()
         self.conductor = conductor
+
+

@@ -111,8 +111,8 @@ class visualRecognition(threading.Thread):
 						if now.minute == time.minute:
 							dif = now.second - time.second
 							if dif > 10:
-								self.blinkFrequency = self.TOTAL / dif
-								self.events.put(Evento("BLINK FREQUENCY", self.blinkFrequency, "Conductor"))
+								self.blinkFrequency = float(self.TOTAL) / float(dif)
+								self.events.put(Evento("BLINK FREQUENCY", "",self.blinkFrequency, "Conductor"))
 								self.TOTAL = 0
 								time = now
 						else: 
@@ -125,7 +125,7 @@ class visualRecognition(threading.Thread):
 						print("Blink Frequency: ", self.blinkFrequency)
 
 					if self.COUNTER >= self.EYE_AR_CONSEC_FRAMES_SLEEP:
-						self.events.put(Evento("ALERT", "Dormido", "Conductor"))
+						self.events.put(Evento("ALERT", "","Dormido", "Conductor"))
 						if not self.ALARM_ON:
 							self.ALARM_ON = True
 

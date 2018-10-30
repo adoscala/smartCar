@@ -17,7 +17,7 @@ def serialConnection():
 def calcular_tendencia(arr):
         suma = 0
         for i in range(0, len(arr)-1):
-                derivada = arr(i+1) - arr(i)
+                derivada = arr[i+1].descripcion - arr[i].descripcion
                 suma += derivada
         promedio = suma / (len(arr)-1)
         return promedio
@@ -28,7 +28,7 @@ def alert(event, historico):
         args = {
                 "tipo": event.tipo,
                 "descripcion": event.descripcion,
-                "conductor:" event.conductor,
+                "conductor": event.conductor,
                 "hora": event.hora}
         r = requests.post(url, json=json.dumps(args))
     
@@ -75,23 +75,16 @@ if __name__ == "__main__":
                     info_queue.append(event)
             elif event.tipo == "BLINK FREQUENCY":
                     if event.descripcion > 0.5:
-                            temp_list = list(info_queue)
+			    temp_list = []
+			    for j in info_queue:
+				if j.subtipo == 'velocidad':
+				    temp_list.append(j)
                             tendencia = calcular_tendencia(temp_list)
                             if (tendencia > 3):
-                                    alert(event, historico)
+                                    alert(event, temp_list)
                             #Hay que ver los cambios en la velocidad  
             elif event.tipo == "ALERT":
                     alert(event, historico)
                     #Hay que enviar el evento al servidor
 
-
-
-
-
-                
-
-
-
-
-        
 
