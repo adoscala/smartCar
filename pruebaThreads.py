@@ -7,9 +7,30 @@ import argparse
 import os
 from time import sleep
 from collections import deque
+import requests
+import json
 
+server_url = 'http://172.20.10.2:3000/'
 def serialConnection():
     os.system("sudo rfcomm connect hci0 00:1D:A5:68:98:8B")
+
+def calcular_tendencia(arr):
+        suma = 0
+        for i in range(0, len(arr)-1):
+                derivada = arr(i+1) - arr(i)
+                suma += derivada
+        promedio = suma / (len(arr)-1)
+        return promedio
+
+def alert(event, historico):
+        """Enviar datos al servidor"""
+        url= server_url + 'eventos/crear'
+        args = {
+                "tipo": event.tipo,
+                "descripcion": event.descripcion,
+                "conductor:" event.conductor,
+                "hora": event.hora}
+        r = requests.post(url, json=json.dumps(args))
     
 if __name__ == "__main__":
 
@@ -41,7 +62,7 @@ if __name__ == "__main__":
     obdII.daemon = True
     obdII.start()
 
-    info_queue = deque([], maxlen = 10)
+    info_queue = deque([], maxlen = 60)
     #freq_queue = deque([], maxlen = 10)
     #alert_queue = deque([], maxlen)
 
@@ -54,8 +75,13 @@ if __name__ == "__main__":
                     info_queue.append(event)
             elif event.tipo == "BLINK FREQUENCY":
                     if event.descripcion > 0.5:
+                            temp_list = list(info_queue)
+                            tendencia = calcular_tendencia(temp_list)
+                            if (tendencia > 3):
+                                    alert(event, historico)
                             #Hay que ver los cambios en la velocidad  
             elif event.tipo == "ALERT":
+                    alert(event, historico)
                     #Hay que enviar el evento al servidor
 
 
