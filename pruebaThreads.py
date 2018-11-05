@@ -52,7 +52,6 @@ if __name__ == "__main__":
     serialThread = threading.Thread(target=serialConnection)
     serialThread.daemon = True
     serialThread.start()
-#    serialThread.join()
     
     sleep(10)
 
@@ -63,9 +62,7 @@ if __name__ == "__main__":
     obdII.start()
 
     info_queue = deque([], maxlen = 60)
-    #freq_queue = deque([], maxlen = 10)
-    #alert_queue = deque([], maxlen)
-
+   
     while True: # Loop principal del programa
         if not events.empty():
             event = events.get()
