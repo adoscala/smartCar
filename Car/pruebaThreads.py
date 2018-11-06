@@ -10,7 +10,7 @@ from collections import deque
 import requests
 import json
 
-server_url = 'http://172.20.10.2:3000/'
+server_url = 'http://179.27.96.73:3000/'
 def serialConnection():
     os.system("sudo rfcomm connect hci0 00:1D:A5:68:98:8B")
 
