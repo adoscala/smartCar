@@ -6,7 +6,7 @@ class Evento:
         self.tipo = tipo
         self.subtipo = subtipo
         self.descripcion = descripcion
-        self.hora = datetime.datetime.now()
+        self.hora = datetime.datetime.now().isoformat()
         self.conductor = conductor
 
 

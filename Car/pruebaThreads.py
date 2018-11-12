@@ -10,7 +10,7 @@ from collections import deque
 import requests
 import json
 
-server_url = 'http://172.20.10.2:3000/'
+server_url = 'http://179.27.96.73:3000/'
 def serialConnection():
     os.system("sudo rfcomm connect hci0 00:1D:A5:68:98:8B")
 
@@ -22,7 +22,7 @@ def calcular_tendencia(arr):
         promedio = suma / (len(arr)-1)
         return promedio
 
-def alert(event, historico):
+def alert(event):
         """Enviar datos al servidor"""
         url= server_url + 'eventos/crear'
         args = {
@@ -30,7 +30,7 @@ def alert(event, historico):
                 "descripcion": event.descripcion,
                 "conductor": event.conductor,
                 "hora": event.hora}
-        r = requests.post(url, json=json.dumps(args))
+        r = requests.post(url, json=args)
     
 if __name__ == "__main__":
 
@@ -66,10 +66,20 @@ if __name__ == "__main__":
     while True: # Loop principal del programa
         if not events.empty():
             event = events.get()
-            print(event)
+            print(event.descripcion)
             # Hacer lo que haya que hacer con el evento
             if event.tipo == "INFO":
-                    info_queue.append(event)
+		    info_queue.append(event)
+		    if event.subtipo == 'velocidad':
+		        if event.descripcion > 40:
+			    print 'Alta velocidad'
+			    event.descripcion = 'Alta velocidad: ' + str(event.descripcion)
+			    alert(event)
+		    if event.subtipo == 'rpm':
+		        if event.descripcion > 3500:
+			    print 'Elevadas rpm'
+			    event.descripcion = 'Elevadas rpm: ' + str(event.descripcion)
+			    alert(event)
             elif event.tipo == "BLINK FREQUENCY":
                     if event.descripcion > 0.5:
 			    temp_list = []
@@ -77,11 +87,12 @@ if __name__ == "__main__":
 				if j.subtipo == 'velocidad':
 				    temp_list.append(j)
                             tendencia = calcular_tendencia(temp_list)
-                            if (tendencia > 3):
-                                    alert(event, temp_list)
+                            if (float (tendencia) > 3):
+                                    event.descripcion = event.descripcion + "; Tendencia: " + str(tendencia)
+                                    alert(event)
                             #Hay que ver los cambios en la velocidad  
             elif event.tipo == "ALERT":
-                    alert(event, historico)
+                    alert(event)
                     #Hay que enviar el evento al servidor
 
 

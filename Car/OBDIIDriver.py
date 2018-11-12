@@ -16,6 +16,8 @@ class obdIIDriver(threading.Thread):
     def run(self):
         print self.connection.is_connected()
         while True:
-            response = self.connection.query(obd.commands.SPEED)
-            self.events.put(Evento("INFO", "velocidad", response.value, "Conductor"))
+            response1 = self.connection.query(obd.commands.SPEED)
+	    response2 = self.connection.query(obd.commands.RPM)
+	    self.events.put(Evento("INFO", "rpm", response2.value.magnitude, "DEMO"))
+            self.events.put(Evento("INFO", "velocidad", response1.value.magnitude, "DEMO"))
             sleep(1)
