@@ -3,6 +3,8 @@ const app = express();
 const morgan = require('morgan');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
+var cors = require('cors')
+
 
 const eventosRoutes = require('./api/routes/eventos');
 
@@ -13,18 +15,20 @@ app.use(morgan('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// CORS Allow
-app.use((req, res, next) => {
-    res.header('Allow-Control-Allow-Origin', '*');
-    res.header('Allow-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
-    res.header('Access-Control-Allow-Origin','*');
+app.use(cors());
 
-    if(req.method === 'OPTIONS') {
-        res.header('Allow-Control-Allow-Methods', 'PUT, POST, GET, PATCH, DELETE');
-        return res.status(200).json({});
-    }
-    next();
-});
+// // CORS Allow
+// app.use((req, res, next) => {
+//     res.header('Allow-Control-Allow-Origin', '*');
+//     res.header('Allow-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+//     res.header('Access-Control-Allow-Origin','*');
+//
+//     if(req.method === 'OPTIONS') {
+//         res.header('Allow-Control-Allow-Methods', 'PUT, POST, GET, PATCH, DELETE');
+//         return res.status(200).json({});
+//     }
+//     next();
+// });
 
 // Rutas
 app.use('/eventos', eventosRoutes);
