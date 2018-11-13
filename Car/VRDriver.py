@@ -9,6 +9,7 @@ import dlib
 import cv2
 import datetime
 from Evento import Evento
+import RPi.GPIO as GPIO
 
 class visualRecognition(threading.Thread):
     # aca va todo el codigo de visual recognition
@@ -24,8 +25,8 @@ class visualRecognition(threading.Thread):
 		# blink and then a second constant for the number of consecutive
 		# frames the eye must be below the threshold for to set off the
 		# alarm
-		self.EYE_AR_THRESH = 0.3
-		self.EYE_AR_CONSEC_FRAMES_SLEEP = 16
+		self.EYE_AR_THRESH = 0.28
+		self.EYE_AR_CONSEC_FRAMES_SLEEP = 10
 		self.EYE_AR_CONSEC_FRAMES_BLINK = 3
 
 		# initialize the frame counter as well as a boolean used to
@@ -55,110 +56,116 @@ class visualRecognition(threading.Thread):
 		self.blinkFrequency = 0
 
 	def run(self):
-		time = datetime.datetime.now()
-		while True:
-			# grab the frame from the threaded video file stream, resize
-			# it, and convert it to grayscale
-			# channels)
-			frame = self.vs.read()
-			frame = imutils.resize(frame, width=450)
-			gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+                try:
+                    time = datetime.datetime.now()
+                    while True:
+                            # grab the frame from the threaded video file stream, resize
+                            # it, and convert it to grayscale
+                            # channels)
+                            frame = self.vs.read()
+                            frame = imutils.resize(frame, width=450)
+                            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-			# detect faces in the grayscale frame
-			rects = self.detector.detectMultiScale(gray, scaleFactor=1.1, 
-			minNeighbors=5, minSize=(30, 30),
-			flags=cv2.CASCADE_SCALE_IMAGE)
+                            # detect faces in the grayscale frame
+                            rects = self.detector.detectMultiScale(gray, scaleFactor=1.1, 
+                            minNeighbors=5, minSize=(30, 30),
+                            flags=cv2.CASCADE_SCALE_IMAGE)
 
-			# loop over the face detections
-			for (x, y, w, h) in rects:
-				# construct a dlib rectangle object from the Haar cascade
-				# bounding box
-				rect = dlib.rectangle(int(x), int(y), int(x + w),
-				int(y + h))
+                            # loop over the face detections
+                            for (x, y, w, h) in rects:
+                                    # construct a dlib rectangle object from the Haar cascade
+                                    # bounding box
+                                    rect = dlib.rectangle(int(x), int(y), int(x + w),
+                                    int(y + h))
 
-				# determine the facial landmarks for the face region, then
-				# convert the facial landmark (x, y)-coordinates to a NumPy
-				# array
-				shape = self.predictor(gray, rect)
-				shape = face_utils.shape_to_np(shape)
-				# extract the left and right eye coordinates, then use the
-				# coordinates to compute the eye aspect ratio for both eyes
-				leftEye = shape[self.lStart:self.lEnd]
-				rightEye = shape[self.rStart:self.rEnd]
-				leftEAR = self.eye_aspect_ratio(leftEye)
-				rightEAR = self.eye_aspect_ratio(rightEye)
+                                    # determine the facial landmarks for the face region, then
+                                    # convert the facial landmark (x, y)-coordinates to a NumPy
+                                    # array
+                                    shape = self.predictor(gray, rect)
+                                    shape = face_utils.shape_to_np(shape)
+                                    # extract the left and right eye coordinates, then use the
+                                    # coordinates to compute the eye aspect ratio for both eyes
+                                    leftEye = shape[self.lStart:self.lEnd]
+                                    rightEye = shape[self.rStart:self.rEnd]
+                                    leftEAR = self.eye_aspect_ratio(leftEye)
+                                    rightEAR = self.eye_aspect_ratio(rightEye)
 
-				# average the eye aspect ratio together for both eyes
-				ear = (leftEAR + rightEAR) / 2.0
+                                    # average the eye aspect ratio together for both eyes
+                                    ear = (leftEAR + rightEAR) / 2.0
 
-				# compute the convex hull for the left and right eye, then
-				# visualize each of the eyes
-				leftEyeHull = cv2.convexHull(leftEye)
-				rightEyeHull = cv2.convexHull(rightEye)
-				#cv2.drawContours(frame, [leftEyeHull], -1, (0, 255, 0), 1)
-				#cv2.drawContours(frame, [rightEyeHull], -1, (0, 255, 0), 1)
+                                    # compute the convex hull for the left and right eye, then
+                                    # visualize each of the eyes
+                                    leftEyeHull = cv2.convexHull(leftEye)
+                                    rightEyeHull = cv2.convexHull(rightEye)
+                                    cv2.drawContours(frame, [leftEyeHull], -1, (0, 255, 0), 1)
+                                    cv2.drawContours(frame, [rightEyeHull], -1, (0, 255, 0), 1)
 
-				# check to see if the eye aspect ratio is below the blink
-				# threshold, and if so, increment the blink frame counter
-				if ear < self.EYE_AR_THRESH:
-					self.COUNTER += 1
-					# if the eyes were closed for a sufficient number of
-					# frames, then sound the alarm
-					if self.COUNTER >= self.EYE_AR_CONSEC_FRAMES_BLINK:
+                                    # check to see if the eye aspect ratio is below the blink
+                                    # threshold, and if so, increment the blink frame counter
+                                    if ear < self.EYE_AR_THRESH:
+                                            self.COUNTER += 1
+                                            # if the eyes were closed for a sufficient number of
+                                            # frames, then sound the alarm
+                                            if self.COUNTER >= self.EYE_AR_CONSEC_FRAMES_BLINK:
 
-						self.TOTAL += 1
-						now = datetime.datetime.now()
-						if now.minute == time.minute:
-							dif = now.second - time.second
-							if dif > 10:
-								self.blinkFrequency = float(self.TOTAL) / float(dif)
-								self.events.put(Evento("BLINK FREQUENCY", "",self.blinkFrequency, "Conductor"))
-								self.TOTAL = 0
-								time = now
-						else: 
-							dif = 60 + (now.second - time.second)
-							if dif > 10:
-								self.blinkFrequency = self.TOTAL / dif
-								self.TOTAL = 0 
-								time = now
-						print("Blinks: ", self.TOTAL)
-						print("Blink Frequency: ", self.blinkFrequency)
+                                                    self.TOTAL += 1
+                                                    now = datetime.datetime.now()
+                                                    if now.minute == time.minute:
+                                                            dif = now.second - time.second
+                                                            if dif > 10:
+                                                                    self.blinkFrequency = float(self.TOTAL) / float(dif)
+                                                                    self.events.put(Evento("BLINK FREQUENCY", "",self.blinkFrequency, "Conductor"))
+                                                                    self.TOTAL = 0
+                                                                    time = now
+                                                    else: 
+                                                            dif = 60 + (now.second - time.second)
+                                                            if dif > 10:
+                                                                    self.blinkFrequency = self.TOTAL / dif
+                                                                    self.TOTAL = 0 
+                                                                    time = now
+                                                    print("Blinks: ", self.TOTAL)
+                                                    print("Blink Frequency: ", self.blinkFrequency)
 
-					if self.COUNTER >= self.EYE_AR_CONSEC_FRAMES_SLEEP:
-						self.events.put(Evento("ALERT", "","Dormido", "Conductor"))
-						if not self.ALARM_ON:
-							self.ALARM_ON = True
+                                            if self.COUNTER >= self.EYE_AR_CONSEC_FRAMES_SLEEP:
+                                                    self.events.put(Evento("ALERT", "","Dormido", {"nombre":"Paula","apellido":"Rios","matricula":"HAA122"}))
+                                                    self.COUNTER = 0
+                                                    if not self.ALARM_ON:
+                                                            self.ALARM_ON = True
 
-							# check to see if the TrafficHat buzzer should
-							# be sounded
-							if self.args["alarm"] > 0:
-								th.buzzer.blink(0.1, 0.1, 10, background=True)
+                                                            # check to see if the TrafficHat buzzer should
+                                                            # be sounded
+                                                            if self.args["alarm"] > 0:
+                                                                    th.buzzer.blink(0.1, 0.1, 10, background=True)
 
-							# draw an alarm on the frame
-							#cv2.putText(frame, "DROWSINESS ALERT!", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
-				# reset the eye frame counter
-				# otherwise, the eye aspect ratio is not below the blink
-				# threshold, so reset the counter and alarm
-				else:
-					self.COUNTER = 0
-					self.ALARM_ON = False
+                                                            # draw an alarm on the frame
+                                                            #cv2.putText(frame, "DROWSINESS ALERT!", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+                                    # reset the eye frame counter
+                                    # otherwise, the eye aspect ratio is not below the blink
+                                    # threshold, so reset the counter and alarm
+                                    else:
+                                            self.COUNTER = 0
+                                            self.ALARM_ON = False
 
-				# draw the computed eye aspect ratio on the frame to help
-				# with debugging and setting the correct eye aspect ratio
-				# thresholds and frame counters
-				#cv2.putText(frame, "EAR: {:.3f}".format(ear), (300, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+                                    # draw the computed eye aspect ratio on the frame to help
+                                    # with debugging and setting the correct eye aspect ratio
+                                    # thresholds and frame counters
+                                    #cv2.putText(frame, "EAR: {:.3f}".format(ear), (300, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
 
-			# show the frame
-			#cv2.imshow("Frame", frame)
-			key = cv2.waitKey(1) & 0xFF
+                            # show the frame
+                            #cv2.imshow("Frame", frame)
+                            key = cv2.waitKey(1) & 0xFF
 
-			# if the `q` key was pressed, break from the loop
-			if key == ord("q"):
-				break
+                            # if the `q` key was pressed, break from the loop
+                            if key == ord("q"):
+                                    break
 
-		# do a bit of cleanup
-		cv2.destroyAllWindows()
-		vs.stop()
+                    # do a bit of cleanup
+                    cv2.destroyAllWindows()
+                    vs.stop()
+                except:
+                    GPIO.setmode(GPIO.BOARD)
+                    GPIO.setup(3, GPIO.OUT)
+                    GPIO.output(3, True)
 
 	def euclidean_dist(self, ptA, ptB):
 		# compute and return the euclidean distance between the two
